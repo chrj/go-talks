@@ -1,0 +1,265 @@
+The Go X repository
+And a top 5 of my favorite packages
+
+Christian Joergensen
+Co-founder, CTO at Ubivox Technologies
+christian@ubivox.com
+https://www.ubivox.com
+
+* About me
+
+- DIKU dropout with half a college degree
+- Co-founded Ubivox in 2009.
+- Ubivox is a Danish ESP sending more than 100M e-mails per month with analytics, segmentation and automation
+- Go programmer for about 4 years (since Go 1.3)
+- I have been doing web, database, mail and server ops since the late 90s.
+
+* What is the /x/ repository
+
+- Set of packages maintained by the same method and by the same people as std 
+- Though not governed by the same Go 1 compatibility promise as std
+- Still part of the Go project
+- Though a bit secret
+- Categorized in different projects
+- Lives at the import path `golang.org/x/<project>`
+- With the code at `https://github.com/golang/<project>` and `https://go.googlesource.com/<project>`
+
+* /x/ projects
+
+Each project contains multiple packages.
+
+- `golang.org/x/crypto` - various high level crypto tools
+- `golang.org/x/exp` - experiments (e.g. `shiny`)
+- `golang.org/x/image` - font and draw support for `image.Image` 
+- `golang.org/x/mobile` - Go apps for Android and IOS
+- `golang.org/x/net` - extensions for the std `net` packages
+- `golang.org/x/sync` - high level syncronization tools
+- `golang.org/x/text` - encoding and transformation of text
+- `golang.org/x/time` - rate limiting
+
+And various other stuff in: `arch`, `blog`, `oauth2`, `perf`, `review`, `sys`, `talks`, `term`, `tools`
+
+* A top 5 of /x/ packages
+
+My personal top 5 favorite packages from `/x/`. 
+
+With a small introduction for each of them.
+
+* Number 5: /x/time/rate
+
+* Number 5: /x/time/rate
+
+A token bucket rate limiter for events defined by two parameters:
+
+  type Limit float64
+
+  func NewLimiter(r Limit, b int) *Limiter
+
+- `r`: Events per second
+- `b`: Permit bursts of this size
+
+Convenience function:
+
+  func Every(interval time.Duration) Limit
+
+Thus, we could write:
+
+  l := rate.NewLimiter(rate.Every(25 * time.Minute), 1)
+
+* Number 5: /x/time/rate (Wait)
+
+Block until an operation may proceed. 
+
+  l := rate.NewLimiter(1, 1)
+  ctx := context.Background()
+
+  for {
+      l.Wait(ctx)
+      // Do your thing
+  }
+
+Context support for:
+
+- Cancellation
+- Deadline / Timeout
+
+* Number 5: /x/time/rate (Allow)
+
+Check if an operation may proceed
+
+  l := rate.NewLimiter(1, 1)
+
+  for {
+      if !l.Allow() {
+          continue
+      }
+      // Do your thing
+  }
+
+If you intend to skip the operation, if it may not
+
+* Number 5: /x/time/rate (Reserve)
+
+How long should I wait before the operation may proceed
+
+  l := rate.NewLimiter(1, 1)
+
+  for {
+      r := l.Reserve()
+      time.Sleep(r.Delay())
+
+      // Do your thing
+  }
+
+If you intend to wait yourself and potentially slow down processing upstream.
+
+A reservation can be cancelled by calling `r.Cancel()`.
+
+* Number 4: /x/crypto/ssh
+
+* Number 4: /x/crypto/ssh
+
+- A fully fledged SSH client and server.
+- OpenSSH compatible
+- Support for both password and public key authentication
+- Useful both as a remote shell protocol, TCP port/streamlocal forwarder and for tunneled dialing
+- But could also potentially be used as a secure transport for your own application protocol (encrypted, authenticated, multiplexed)
+
+Example:
+
+- Log into remote system using public key authentication
+- Run a command and print the output
+
+* Number 4: /x/crypto/ssh (Parse private key)
+
+First things first. Parse the private key using the provided  helper function:
+
+.code ssh_client.go /^func loadRSAKey/,/^}/
+
+- Supports RSA, DSA, ECDSA as well as Ed25519 private keys
+- Will not read encrypted private keys
+
+* Number 4: /x/crypto/ssh (SSH client connection)
+
+Configure the SSH client connection
+
+.code ssh_client.go /START CLIENT SETUP/,/END CLIENT SETUP/
+
+Multiple sessions can re-use the same client connection. Will be multiplexed onto single TCP connection.
+
+The connection can be shared between multiple go routines.
+
+* Number 4: /x/crypto/ssh (SSH session and command execution)
+
+Start a session and execute a command
+
+.code ssh_client.go /session, err/,/fmt.Println\(b.String\(\)\)$/
+
+And like that, Go does SSH.
+
+* Number 3: /x/net/trace
+
+* Number 3: /x/net/trace
+
+- Tracing for requests and long-lived objects
+- Exposes an HTTP interface on: `/debug/requests` and `/debug/events`
+- Will register those endpoints on package initialization on `http.DefaultServeMux`
+
+Just a quick intro, so I will focus only on the request tracing part here.
+
+Add a trace to your handler function:
+
+  func New(family, title string) Trace
+
+Conventionally, for HTTP requests:
+
+- `family`: The (qualified) handler name
+- `title`: The request path
+
+* Number 3: /x/net/trace (Instrumenting handlers)
+
+To instrument an `http.HandlerFunc`, use something like:
+
+.code http_trace.go /func Handler/,/^}/
+
+* Number 3: /x/net/trace (Tracing requests)
+
+Run some requests and point your web browser to your server at `/debug/requests`.
+
+Demo!
+
+* Number 2: /x/sync/errgroup
+
+* Number 2: /x/sync/errgroup
+
+Basically a fancy `sync.WaitGroup`.
+
+Perform a set of subtasks in a group of goroutines with:
+
+- Synchronization
+- Error propagation 
+- Context cancellation
+
+Only two methods:
+
+  func (g *Group) Go(f func() error)
+  func (g *Group) Wait() error
+
+And a constructor for `context.Context` support:
+
+  func WithContext(ctx context.Context) (*Group, context.Context)
+
+* Number 2: /x/sync/errgroup (The work)
+
+.code errgroup_example.go /BEGIN ANALYZEURL FUNC OMIT/,/END ANALYZEURL FUNC OMIT/
+
+* Number 2: /x/sync/errgroup (Usage)
+
+.code errgroup_example.go /BEGIN ANALYZE FUNC OMIT/,/END ANALYZE FUNC OMIT/
+
+* Number 2: /x/sync/errgroup (A better WaitGroup)
+
+Why is this better than the a naive implementation using only `sync.WaitGroup`?
+
+- Error handling is simplified. You need to check only the return value of `Wait()`.
+- No need to worry about `Add()`'ing enough delta to your `WaitGroup`.
+- If one of the subtasks results in an error, any unfinished work is cancelled, and the first error is returned.
+- Context cancellation will not unblock `Wait()`, but once the individual subtasks has been cancelled, it will return.
+- Thus there can be no accidental goroutine leaking. 
+
+* Number 1: /x/crypto/acme/autocert
+
+* Number 1: /x/crypto/acme/autocert
+
+- Automatic access to certificates from Let's Encrypt
+- Means it will request the certificate on demand during the TLS handshake
+- Recently got `net.Listener` support, to become fully automatic and enable clever one-liners using `http.Serve` :)
+
+This is awesome. TLS has never been easier!
+
+Let's start with a simple Hello World server...
+
+* Number 1: /x/crypto/acme/autocert (Hello world server)
+
+.code autocert_example_plain.go
+
+* Number 1: /x/crypto/acme/autocert (TLS server)
+
+.code autocert_example_secure.go
+
+It's even shorter!
+
+* Number 1: /x/crypto/acme/autocert (The gory details)
+
+Almost feels like magic. But here's what happens:
+
+- The hostname is read from the TLS `HelloRequest` message in the TLS handshake
+- Checked against the whitelist, given as parameters to `autocert.NewListener`
+- If certificate exists in local cache dir (varies by OS), serve certificate
+- Otherwise, request new certificate from Let's Encrypt
+- Save to cache dir and start timer that renews certificate in the background
+- Serve the new certificate
+
+Takes less than five seconds on the first request.
+
+Used in production at Ubivox to provide SSL for custom domains for our customers and serves millions of requests each day.

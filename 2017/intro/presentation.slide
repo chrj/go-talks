@@ -1,0 +1,608 @@
+Introduction to Go
+WORK IN PROGRESS
+
+Christian Joergensen
+Co-founder, CTO at Ubivox Technologies
+christian@ubivox.com
+https://www.ubivox.com
+
+* Agenda
+
+- Language features
+- Environment: Installing, Paths
+- Language: Syntax, Types, Packages, Goroutines, Channels, Range loops, Defer
+- Idioms: Names, Errors, Working with I/O
+- Applications: HTTP, JSON, Database
+- Tools: `fmt`, `doc`, `vet`, `test`
+
+* Language features
+
+- First class concurrency
+- Garbage collected
+- Statically typed
+- Not OO
+- Fast compilation
+- Cross compilation
+- Fast execution
+- Single, statically linked binary
+- Tooling
+
+* Installing
+
+- Tarball downloaded from [[https://golang.org/dl/]]
+- Extract to `/usr/local`
+
+  wget https://.../go1.9.2.linux-amd64.tar.gz
+  tar -C /usr/local -xzf go1.9.2.linux-amd64.tar.gz
+
+Contains:
+
+- The Go compiler suite
+- Standard library
+
+* Paths
+
+Go finds your code using these environment variables:
+
+- `GOPATH` where your local go code lives: `~/go`
+- `GOROOT` where your downloaded go distribution lives: `/usr/local/go`
+
+Also, add these to your path to `PATH`:
+
+- `$GOPATH/bin`
+- `$GOROOT/bin`
+
+Now we're ready:
+
+  $ go version
+  go version go1.9.2 linux/amd64
+
+* Syntax
+
+- C-like, as most modern languages
+
+A few gotchas:
+
+- Declarations
+- Condition expressions
+- Loops
+- Expressions in `if` statements
+
+* Syntax: Declarations
+
+Coming from C, a declaration of two integers would read:
+
+  int a, b;
+
+In Go, the order is reversed:
+
+  var a, b int
+
+Short declarations `:=` using type inference with:
+
+  s := "Hello world"
+
+* Syntax: Less clutter
+
+No forced paranthesis on condition expressions:
+
+  if a == 42 { ... }
+
+  for i := 0; i < 10; i++ { ... }
+
+* Syntax: Loops
+
+- Only `for` loops
+- In three variants
+
+  // Naked loop ("do")
+  for { ... }
+
+  // Single condition loop ("while")
+  for cond { ... }
+
+  // Regular loop ("for")
+  for init; cond; post { ... }
+
+* Syntax: Expressions in if statements
+
+TODO: explain
+
+  if err := process(); err != nil {
+    logError(err)
+    return err
+  }
+
+* Types
+
+- Zero values
+- Scalar types
+- Compound types
+- Defined types
+- Struct types
+- Pointer types
+- Function types
+- Method types
+- Interface types
+
+* Types: Zero values
+
+- A newly initialized variable will have the zero value of the type
+- Can be confusing, if the zero value has ambiguous meaning. E.g. time.
+- Will discuss the zero value for each type I go through
+
+* Types: Scalars
+
+What one would expect:
+
+- `bool`
+- `int`, `int8`, `int16`, `int32`, `int64`
+- `uint`, `uint8`, `uint16`, `uint32`, `uint64`
+- `float32`, `float64`
+- `complex64`, `complex128`
+- `byte`, `rune`
+- `string`
+
+* Types: Compounds
+
+Slices, arrays:
+
+  var a []int
+  var b [][]int
+  var c [8]int
+
+Maps:
+
+  var m map[string]int
+  var n map[string]map[string][]int
+
+Must be initialized:
+
+  a := make([]int)
+  b := make([]int, length, capacity)
+  c := new([8]int)
+
+  m := make(map[string]int)
+  m := make(map[string]int, capacity)
+
+* Types: Defined types
+
+- Allocates a new name for an existing type
+- Useful for adding methods to existing types
+
+  type Amount float32
+
+  func (a Amount) VAT() Amount  {
+    return float
+  }
+
+* Types: Struct
+
+Class'ish types composited of other types:
+
+  type Employee struct {
+    Name       string
+    Department string
+    Salary     float64
+  }
+
+To create a new instance, use either a composite literal:
+
+  e := Employee{
+    Name:       "Christian",
+    Department: "Development",
+    Salary:     1000,
+  }
+
+Or allocate the instance and get a pointer with `new`:
+
+  e := new(Employee)
+  e.Name = ...
+
+TODO: constructor convention
+
+* Types: Pointer types
+
+- All types are addressable
+- C-like pointer and dereference syntax
+- Scalar types needs workaround
+
+  var a *int
+
+  a = &42  // Wrong
+
+  b := 42
+  a  = &b
+
+- Compound types are passed by descriptors
+- The zero value for pointers is: nil
+
+* Types: Function types
+
+- Biggest gotcha: Multiple return variables
+
+Typical function declaration:
+
+  func Squares(a, b int) (int, int) {
+    return a + b
+  }
+
+* Types: Method types
+
+- Functions can be associated with a defined type, if that defined type is the first parameter
+- Then the parameter is called the `receiver`
+- Since most methods operation on a specific instance of the data, we use pointer receivers
+- Non-pointer receiver method gets a copy of the underlying data
+- The set of methods supported by a given type is called its Method Set.
+
+  func (e *Employee) GiveRaise(percentage float64) {
+    e.Salary *= 1 + percentage/100
+  }
+
+  func (e Employee) Greet() {
+    fmt.Printf("Hello %s\n", e.Name)
+  }
+
+* Types: Interface types
+
+- Describes behaviour; not data
+- Can be empty
+- Automagically implemented
+- Type Assertions to access underlying type
+
+  type Greeter interface {
+    Greet()
+  }
+
+  var g Greeter
+  
+  g = Employee{...}
+
+  g.Greet()
+  g.GiveRaise(13) // Oops: g.GiveRaise undefined (type Greeter has no field or method GiveRaise)
+
+  e := g.(Employee)
+
+  e.GiveRaise(13)
+
+* Packages
+
+- All source files in one directory must belong to one package.
+- Two types: Program or package.
+
+- Programs can be executed and import other packages
+- Programs lives in package `main`
+- When invoked, calls `main.main`
+
+- Packages are imported using the `import` keyword.
+
+.play hello_world.go
+
+* Packages: Paths
+
+- By convention packages are reference directly from VCS
+- The Go tools will automagically checkout the latest version of your code and any depencies
+- Hopefully they have stable APIs
+- There support for vendored sources embedded in your code base.
+- No standard tool for doing the actual vendoring and updating depdencies. Yet! †
+
+Example: I have a package for implementing SMTP servers living on Github:
+
+  $ go get github.com/chrj/smtpd
+
+Checks out the master branch in: `$GOPATH/github.com/chrj/smtpd`
+
+† [[https://github.com/golang/dep]]
+
+* Goroutines
+
+- Lightweight thread
+- Scheduled across OS threads by Go runtime
+- Concurrency construct
+- Millions of goroutines are no problem (4 KB overhead)
+- Can leak if not terminated
+- Will be killed when the `main` function returns
+
+To start a new goroutine that executes a function concurrently, use the `go` keyword followed by a function call:
+
+  go expensiveCalculation()
+
+* Channels
+
+- Synchronized, thread-safe communication between goroutines
+- Unbuffered or buffered
+- Must be allocated with the `make` function before use:
+
+  c := make(chan int)
+  c := make(chan int, 10)
+
+Beware of edge cases: zero (nil) or closed channel send/receive
+
+* Range loops
+
+Use range loops for iteration:
+
+- Strings (`[index,]` `byte`)
+- Slices (`[index,]` `item`)
+- Arrays (`[index,]` `item`)
+- Maps (`key` `[,value]`)
+- Channels (`item`)
+
+  for msg := range c {
+    ...
+  }
+
+* Goroutine / Channel example:
+
+A small example using both a goroutine and a channel for communication
+
+.play goroutine_channel.go /START demo OMIT/,/END demo OMIT/
+
+* Defer
+
+- Schedules a function to be run when the surrounding function returns
+- Useful for cleanup
+
+Consider this:
+
+  var m sync.Mutex
+
+  func Update(val string) {
+    m.Lock()
+    defer m.Unlock()
+
+    
+
+  }
+
+* Go Idioms
+
+- Names
+- Indexing
+- Errors
+- Defer
+- Working with I/O
+
+* Names
+
+- An identifier in a package is only exported if it's capitalized
+- Consider this sort of public/private variables
+
+  var Author = "Christian"
+  var secret = "hunter2"
+
+
+- Use `CamelCase` for all names
+- Use abbreviations for local variables, and if possible single character names
+
+  var e Employee
+  var rd io.Reader
+  var rw http.ResponseWriter
+
+
+- Single method Interface names should be named after the method:
+
+  type Reader interface {
+    Read(p []byte) (n int, err error)
+  }
+
+* Indexing
+
+TODO: looking up stuff in slices, maps
+
+* Errors
+
+TODO: ignoring errors
+
+Error handling in Go feels very old fashioned at first. But it will grow on you.
+
+The `error` type is a builtin interface:
+
+  type error interface {
+    Error() string
+  }
+
+Most often used in function declarations as the last parameter:
+
+  func (...) Read(p []byte) (n int, err error)
+
+- All functions that can fail, returns an error 
+- Errors are values and you can work with
+- Several packages for wrapping errors with extra data
+- Consider if the error could be handled locally or return it
+
+* Errors: Annotations
+
+Common construct is wrapping a function in an `if` statement and on a failed call
+return the error annotated with some extra details:
+
+  if err := readFromNetwork(); err != nil {
+    return errors.Wrap(err, "read from network failed")
+  }
+
+- The `errors` package here is [[https://godoc.org/github.com/pkg/errors][github.com/pkg/errors]]
+- Also has support for annotating errors with stack traces.
+
+* Errors: Inspecting
+
+The `net` package defines its own `Error` type:
+
+  type Error interface {
+    error
+    Timeout() bool   // Is the error a timeout?
+    Temporary() bool // Is the error temporary?
+  }
+
+We can work with that:
+
+  for {
+    if err := readFromNetwork(); err != nil {
+      if nerr, ok := err.(net.Error); ok && nerr.Temporary() {
+        time.Sleep(5 * time.Second)
+        continue
+      }
+      return err
+    }
+    break
+  }
+
+* Working with I/O
+
+The standard library has a couple of clever interfaces in the [[https://godoc.org/io][io package]] that should be embraced everywhere it makes sense.
+
+These interface are abstractions for everything that deals with byte-based I/O:
+
+  package io
+
+  type Reader interface {
+    Read(p []byte) (n int, err error)
+  }
+
+  type Writer interface {
+    Write(p []byte) (n int, err error)
+  }
+
+These are supported everywhere: File IO, Network IO, HTTP, RPC as well as for encoding/decoding various formats: JSON, XML, CSV, images.
+
+* Applications
+
+Finally, I'm going to go through a couple of real world applications of Go that most modern programmers will use at some point. In particular:
+
+- HTTP Server
+- JSON encoding / decoding
+- Serving JSON over HTTP
+
+* HTTP Server
+
+Go has a production ready HTTP server in the standard library:
+
+- This is what Go was built for
+- Will easily scale to thousands of requests per second
+- Runs each request in separate goroutine, scales across cores
+- Support for TLS, HTTP/2
+
+  package http
+
+  type Handler interface {
+    ServeHTTP(ResponseWriter, *Request)
+  }  
+
+  func ListenAndServe(addr string, handler Handler) error
+
+* HTTP Server: The ResponseWriter interface
+
+All comminication with the client goes through the `ResponseWriter` interface:
+
+  type ResponseWriter interface {
+    Header() Header
+    Write([]byte) (int, error)
+    WriteHeader(int)
+  } 
+
+You may recall the `io.Writer` interface. This is satisfied by the `ResponseWriter` type. So everything that can write, can write to an HTTP response. 
+
+* HTTP Server: Request multiplexing
+
+Having only a single handler for a whole server is not very useful. So in order to do path or host based routing, we need a request multiplexer. The `http` package has a simple one:
+
+  package http
+
+  type ServeMux
+  func NewServeMux() *ServeMux
+  func (mux *ServeMux) Handle(pattern string, handler Handler)
+  func (mux *ServeMux) HandleFunc(pattern string, handler func(ResponseWriter, *Request))
+  func (mux *ServeMux) Handler(r *Request) (h Handler, pattern string)
+  func (mux *ServeMux) ServeHTTP(w ResponseWriter, r *Request)
+
+A default instance is available with the `Handle` and `HandleFunc` methods exposed at package level.
+
+  package http
+
+  func Handle(pattern string, handler Handler)
+  func HandleFunc(pattern string, handler func(ResponseWriter, *Request))
+
+* HTTP Server: Request multiplexing, cont'd
+
+The bundled `ServeMux` is very basic. I prefer working with the [[http://www.gorillatoolkit.org/][Gorilla toolkit]], which also has support for:
+
+- URL Parameters
+- Sessions
+- Method based routing
+- Header based routing
+
+There is a ton of other multiplexers available:
+
+- You should prefer the ones that embraces the `http.Handler` interface.
+- Composition between different packages will be easier
+
+* Serving HTTP: Hello world server
+
+A complete example:
+
+.play http_hello_world.go
+
+* JSON encoding / decoding
+
+Despite the dynamic nature of JSON, Go, being a statically typed language, has excellent JSON support.
+
+- Works with single scalar values. Not very useful!
+- Works with complex structs embedded in multiple levels with type check during encoding and decoding. Very useful!
+- Can encode and decode directly from I/O streams (`io.Reader`, `io.Writer`)
+
+Annotate your structs with tags:
+
+  type Employee struct {
+    Name       string  `json:"name"`
+    Department string  `json:"department"`
+    Salary     float64 `json:"salary"`
+  }
+
+* JSON encoding
+
+Encode using the `json.Marshal` function:
+
+.play json_dump_employee.go /BEGIN demo OMIT/,/END demo OMIT/
+
+* JSON decoding
+
+Decode using the `json.Marshal` function:
+
+.play json_load_employee.go /BEGIN demo OMIT/,/END demo OMIT/
+
+* JSON I/O
+
+TODO: explain `json.NewEncoder`, `json.NewDecoder`
+
+* Serving JSON
+
+In this example I'm going to write a web service exposing a database of employees in JSON:
+
+- The database will just be a map indexed by employee ID
+- I will create a defined type of the map in order to attach a method to the map
+
+.code json_employee_server.go /BEGIN types OMIT/,/END types OMIT/
+
+I will attach a `ServeHTTP` method to allow the map to implement the `http.Handler` interface:
+
+  func (er EmployeeRegister) ServeHTTP(rw http.ResponseWriter, req *http.Request) { ... }
+
+* Serving JSON, cont'd
+
+The Handler:
+
+.code json_employee_server.go /BEGIN handler OMIT/,/END handler OMIT/
+
+* Serving JSON, cont'd
+
+The final wiring:
+
+.play json_employee_server.go /BEGIN demo OMIT/,/END demo OMIT/
+
+* go fmt
+
+* go doc
+
+* go vet
+
+* go test
+

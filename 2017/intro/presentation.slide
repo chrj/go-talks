@@ -163,8 +163,8 @@ Into:
 - Scalar types
 - Collection types
 - Defined types
-- Struct types
 - Pointer types
+- Struct types
 - Function types
 - Method types
 - Interface types
@@ -230,11 +230,11 @@ Must be initialized:
 - Looking up items in arrays and slices uses index expressions as well
 - Out of bound access results in runtime errors
 
-Slice expressions are also supported:
+- Slice expressions are also supported
+- Slice expressions also works for strings, but read-only
 
 .play slicing.go /BEGIN demo OMIT/,/END demo OMIT/
 
-Same syntax and semantics for strings, but read-only
 
 * Types: Defined types
 
@@ -243,11 +243,22 @@ Same syntax and semantics for strings, but read-only
 - Supports the same operations
 - Useful for adding methods to existing types
 
-  type Amount float32
+  type Amount float64
 
   func (a Amount) VAT() Amount  {
     return a * 0.25
   }
+
+* Types: Pointer types
+
+- All types are addressable
+- C-like operators for addressing and indirection
+- Scalar types needs workaround
+
+.play pointers.go /BEGIN demo OMIT/,/END demo OMIT/
+
+- Collection types are passed by descriptors
+- The zero value for pointers is: nil
 
 * Types: Struct
 
@@ -267,7 +278,7 @@ To create a new instance, use either a composite literal:
     Salary:     1000,
   }
 
-Or allocate the instance and get a pointer with `new`:
+Or allocate a zero instance and get a pointer with `new`. Then access the fields:
 
   e := new(Employee)
   e.Name = ...
@@ -290,22 +301,6 @@ If it makes sense, strive to make the struct useful in a "zero" state. Examples:
 
 - [[https://godoc.org/sync#Mutex][sync.Mutex]]
 - [[https://godoc.org/net/http#Client][http.Client]]
-
-* Types: Pointer types
-
-- All types are addressable
-- C-like pointer and dereference syntax
-- Scalar types needs workaround
-
-  var a *int
-
-  a = &42  // Wrong
-
-  b := 42
-  a  = &b
-
-- Compound types are passed by descriptors
-- The zero value for pointers is: nil
 
 * Types: Function types
 
@@ -491,7 +486,7 @@ Consider this:
 
   var m sync.Mutex
 
-  func Update(val string) {
+  func Update(...) {
     m.Lock()
     defer m.Unlock()
 
@@ -557,11 +552,11 @@ The `error` type is a builtin interface:
 
 Most often used in function declarations as the last parameter:
 
-  func (...) Read(p []byte) (n int, err error)
+  func Read(p []byte) (n int, err error)
 
 - All functions that can fail, returns an error 
-- Errors are values and you can work with
-- Several packages for wrapping errors with extra data
+- Errors are values and you can work with them
+- There exists several packages for wrapping errors with extra data
 - Consider if the error could be handled locally or return it
 
 * Errors: Annotations
@@ -569,11 +564,11 @@ Most often used in function declarations as the last parameter:
 Common construct is wrapping a function in an `if` statement and on a failed call
 return the error annotated with some extra details:
 
-  if data, err := ReadFromNetwork(); err != nil {
+  if err := ReadFromNetwork(buf); err != nil {
     return errors.Wrap(err, "read from network failed")
-  } else {
-    handle(data)
-  }
+  } 
+
+  handle(buf)
 
 - The `errors` package here is [[https://godoc.org/github.com/pkg/errors][github.com/pkg/errors]]
 - Also has support for annotating errors with stack traces.
@@ -591,29 +586,30 @@ The `net` package defines its own `Error` type:
 We can work with that:
 
   for {
-    if data, err := ReadFromNetwork(); err != nil {
+    if err := ReadFromNetwork(buf); err != nil {
       if nerr, ok := err.(net.Error); ok && nerr.Temporary() {
         time.Sleep(5 * time.Second)
         continue
       }
       return err
-    } else {
-      handle(data)
-    }
+    } 
     break
   }
+
+  handle(buf)
 
 * Errors: Ignoring
 
 - Don't ever do it
 - But if you must, use the underscore notation
 
-  data, _ := ReadFromNetwork()
-  handle(data)
+  func ParseConfigFile(filename string) (*Config, error) { ... }
+
+  config, _ := ParseConfigFile("/etc/program.yaml)
 
 A better solution: Turn errors into panics
 
-  handle(MustReadFromNetwork())
+  config := MustParseConfigFile("/etc/program.yaml)
 
 - Create new wrapper function named `Must*`
 - Panics on error

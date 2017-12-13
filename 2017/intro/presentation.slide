@@ -161,7 +161,7 @@ Into:
 
 - Zero values
 - Scalar types
-- Compound types
+- Collection types
 - Defined types
 - Struct types
 - Pointer types
@@ -192,10 +192,10 @@ What one would expect:
 - `uint`, `uint8`, `uint16`, `uint32`, `uint64`
 - `float32`, `float64`
 - `complex64`, `complex128`
-- `byte`, `rune`
+- `byte` (`uint8`), `rune` (`int32`)
 - `string`
 
-* Types: Compounds
+* Types: Collections
 
 Slices, arrays:
 
@@ -216,6 +216,25 @@ Must be initialized:
 
   m := make(map[string]int)
   m := make(map[string]int, capacity)
+
+* Working with maps
+
+- Looking up and assigning to items in maps uses index expressions
+- For map lookups, the zero value of the value type is returned if the key is not found
+- Use special return value to test for existance
+
+.play indexing.go /BEGIN demo OMIT/,/END demo OMIT/
+
+* Working with arrays and slices
+
+- Looking up items in arrays and slices uses index expressions as well
+- Out of bound access results in runtime errors
+
+Slice expressions are also supported:
+
+.play slicing.go /BEGIN demo OMIT/,/END demo OMIT/
+
+Same syntax and semantics for strings, but read-only
 
 * Types: Defined types
 
@@ -415,10 +434,12 @@ To start a new goroutine that executes a function concurrently, use the `go` key
 
 - Synchronized, thread-safe communication between goroutines
 - Unbuffered or buffered
-- Must be allocated with the `make` function before use:
+- Must be initialized with the `make` function before use:
 
-  c := make(chan int)
-  c := make(chan int, 10)
+  var c chan int
+
+  c = make(chan int)      // Unbuffered
+  c = make(chan int, 10)  // Buffered
 
 Send operator:
 
@@ -430,23 +451,34 @@ Receive operator:
 
 Beware of edge cases: zero (nil) or closed channel send/receive
 
+* Channels: Select statements
+
+- Listen on multiple cases of send/receive operations
+- Blocks until a case is ready to proceed
+
+.play select.go /BEGIN demo OMIT/,/END demo OMIT/
+
 * Range loops
 
 Use range loops for iteration:
 
-- Strings (`[index,]` `byte`)
-- Slices (`[index,]` `item`)
-- Arrays (`[index,]` `item`)
+- Strings (`index,` `[,rune]`)
+- Slices (`index,` `[,item]`)
+- Arrays (`index,` `[,item]`)
 - Maps (`key` `[,value]`)
 - Channels (`item`)
 
-  for msg := range c {
-    ...
-  }
+  for i := range s { ... }           // String
+  for i, r := range s { ... }        // String
+  for key := range m { ... }         // Map
+  for key, value := range m { ... }  // Map
+  for i := range s { ... }           // Slice, Array
+  for i, item := range s { ... }     // Slice, Array
+  for msg := range c { ... }         // Channel
 
-* Goroutine / Channel example:
+* Goroutine / Channel / Range example:
 
-A small example using both a goroutine and a channel for communication
+A small example using both a goroutine and a channel for communication, read from a range loop:
 
 .play goroutine_channel.go /START demo OMIT/,/END demo OMIT/
 
@@ -470,7 +502,6 @@ Consider this:
 * Go Idioms
 
 - Names
-- Indexing
 - Panics
 - Errors
 - Working with I/O
@@ -495,24 +526,6 @@ Consider this:
   type Reader interface {
     Read(p []byte) (n int, err error)
   }
-
-* Indexing: Maps
-
-- Looking up and assigning to items in maps uses index expressions
-- For map lookups, the zero value of the value type is returned if the key is not found
-- Use extra return value, to test for existance
-
-.play indexing.go /BEGIN demo OMIT/,/END demo OMIT/
-
-* Indexing: Arrays, slices and strings
-
-- Looking up items in arrays, slices and strings uses index expressions as well
-- String indexing is read-only
-- Out of bound access results in runtime errors
-
-Slice expressions are also supported:
-
-.play slicing.go /BEGIN demo OMIT/,/END demo OMIT/
 
 * Panics
 

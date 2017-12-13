@@ -1,5 +1,5 @@
 Introduction to Go
-WORK IN PROGRESS
+The not so short version
 
 Christian Joergensen
 Co-founder, CTO at Ubivox Technologies
@@ -10,10 +10,12 @@ https://www.ubivox.com
 
 - Language features
 - Environment: Installing, Paths
-- Language: Syntax, Types, Packages, Goroutines, Channels, Range loops, Defer
+- The language: Syntax, Types, Packages, Goroutines, Channels, Range loops, Defer
 - Idioms: Names, Errors, Working with I/O
 - Applications: HTTP, JSON, Database
+- Compilation: Commands, Cross compilation
 - Tools: `fmt`, `doc`, `vet`, `test`
+- Resources
 
 * Language features
 
@@ -26,6 +28,11 @@ https://www.ubivox.com
 - Fast execution
 - Single, statically linked binary
 - Tooling
+
+* Environment
+
+- Installing
+- Paths
 
 * Installing
 
@@ -57,16 +64,27 @@ Now we're ready:
   $ go version
   go version go1.9.2 linux/amd64
 
+* The language
+
+- Syntax
+- Types
+- Packages
+- Goroutines
+- Channels
+- Range loops
+- Defer
+
 * Syntax
 
 - C-like, as most modern languages
+- Clean, with very few keywords
 
 A few gotchas:
 
 - Declarations
-- Condition expressions
+- Less clutter
 - Loops
-- Expressions in `if` statements
+- Condition expressions
 
 * Syntax: Declarations
 
@@ -78,35 +96,61 @@ In Go, the order is reversed:
 
   var a, b int
 
-Short declarations `:=` using type inference with:
+Short declarations using type inference with:
+
+  var s = "Hello world"
+
+Or even shorter:
 
   s := "Hello world"
 
 * Syntax: Less clutter
 
-No forced paranthesis on condition expressions:
+- No paranthesis on condition expressions:
+- No forced semi-colons
+- No type stuttering using short declarations
 
-  if a == 42 { ... }
+  if a == 42 { 
+    print("hello")
+  }
 
   for i := 0; i < 10; i++ { ... }
+
+  var c *http.Client = &http.Client{}
+
+  c := &http.Client{}
 
 * Syntax: Loops
 
 - Only `for` loops
 - In three variants
 
-  // Naked loop ("do")
+The naked loop (do)
+
   for { ... }
 
-  // Single condition loop ("while")
+The single condition loop (while)
+
   for cond { ... }
 
-  // Regular loop ("for")
+The Regular loop (for)
+
   for init; cond; post { ... }
 
-* Syntax: Expressions in if statements
+* Syntax: Condition expressions
 
-TODO: explain
+- Add an "init" expression to the condition
+- Variables lives only in the scope of the clauses
+
+Turns:
+
+  err := process()
+  if err != nil {
+    logError(err)
+    return err
+  }
+
+Into:
 
   if err := process(); err != nil {
     logError(err)
@@ -124,12 +168,20 @@ TODO: explain
 - Function types
 - Method types
 - Interface types
+- The `nil` value
 
 * Types: Zero values
 
-- A newly initialized variable will have the zero value of the type
+- A newly declared variable will have the zero value of the type
+- Some types require initialization before use
 - Can be confusing, if the zero value has ambiguous meaning. E.g. time.
 - Will discuss the zero value for each type I go through
+
+Mostly what you would expect, though:
+
+  var s string  // ""
+  var i int     // 0
+  var b bool    // false
 
 * Types: Scalars
 
@@ -168,12 +220,14 @@ Must be initialized:
 * Types: Defined types
 
 - Allocates a new name for an existing type
+- Same underlying type
+- Supports the same operations
 - Useful for adding methods to existing types
 
   type Amount float32
 
   func (a Amount) VAT() Amount  {
-    return float
+    return a * 0.25
   }
 
 * Types: Struct
@@ -199,7 +253,24 @@ Or allocate the instance and get a pointer with `new`:
   e := new(Employee)
   e.Name = ...
 
-TODO: constructor convention
+* Types: Struct; cont'd
+
+Pointer or non-pointer struct?
+
+- Non-pointer structs are easier to garbage collect
+- Pointer structs doesn't require a deep copy
+
+If a struct requires initialization, create a constructor function. 
+The naming convention is:
+
+  func NewEmployee(name, department string, salary float64) *Employee {
+    ...
+  }
+
+If it makes sense, strive to make the struct useful in a "zero" state. Examples:
+
+- [[https://godoc.org/sync#Mutex][sync.Mutex]]
+- [[https://godoc.org/net/http#Client][http.Client]]
 
 * Types: Pointer types
 
@@ -219,18 +290,45 @@ TODO: constructor convention
 
 * Types: Function types
 
-- Biggest gotcha: Multiple return variables
+- Can have multiple return variables
 
 Typical function declaration:
 
-  func Squares(a, b int) (int, int) {
-    return a + b
+  func TwoInts(a int) (int, int) {
+    return 60 + a, 80 - a
   }
+
+  var otherName func(int) (int, int)
+
+  a, b := TwoInts(10)
+
+Unused return values must be ignored:
+
+  _, b := TwoInts(10) 
+
+* Types: Function types, cont'd
+
+Varadic parameters:
+
+  func Sum(numbers ...int) int {
+    // type of numbers will be []int
+  }
+
+  sum := Sum(42, 60)
+
+Expanded:
+
+  numbers := []int{42, 60}
+  sum := Sum(numbers...)
+
+- Only a single type
+- Implemented as a slice
 
 * Types: Method types
 
-- Functions can be associated with a defined type, if that defined type is the first parameter
-- Then the parameter is called the `receiver`
+- Functions can be associated with any named type
+- Only types in the same package
+- The first parameter is called the `receiver`, and must be of the associated type
 - Since most methods operation on a specific instance of the data, we use pointer receivers
 - Non-pointer receiver method gets a copy of the underlying data
 - The set of methods supported by a given type is called its Method Set.
@@ -248,7 +346,7 @@ Typical function declaration:
 - Describes behaviour; not data
 - Can be empty
 - Automagically implemented
-- Type Assertions to access underlying type
+- Type assertions to access underlying type
 
   type Greeter interface {
     Greet()
@@ -264,6 +362,12 @@ Typical function declaration:
   e := g.(Employee)
 
   e.GiveRaise(13)
+
+* The nil value
+
+- Predeclared identifier, not a keyword
+- Zero value for pointer, map, slice, function, channel and interface types
+- Beware of panics
 
 * Packages
 
@@ -316,6 +420,14 @@ To start a new goroutine that executes a function concurrently, use the `go` key
   c := make(chan int)
   c := make(chan int, 10)
 
+Send operator:
+
+  c <- 5
+
+Receive operator:
+
+  a := <-c
+
 Beware of edge cases: zero (nil) or closed channel send/receive
 
 * Range loops
@@ -351,7 +463,7 @@ Consider this:
     m.Lock()
     defer m.Unlock()
 
-    
+    // Critical area
 
   }
 
@@ -359,8 +471,8 @@ Consider this:
 
 - Names
 - Indexing
+- Panics
 - Errors
-- Defer
 - Working with I/O
 
 * Names
@@ -371,28 +483,56 @@ Consider this:
   var Author = "Christian"
   var secret = "hunter2"
 
-
 - Use `CamelCase` for all names
-- Use abbreviations for local variables, and if possible single character names
+- Keep local variables short:
 
   var e Employee
   var rd io.Reader
   var rw http.ResponseWriter
 
-
-- Single method Interface names should be named after the method:
+- Single method Interface names should be named after the method (`'...er'`):
 
   type Reader interface {
     Read(p []byte) (n int, err error)
   }
 
-* Indexing
+* Indexing: Maps
 
-TODO: looking up stuff in slices, maps
+- Looking up and assigning to items in maps uses index expressions
+- For map lookups, the zero value of the value type is returned if the key is not found
+- Use extra return value, to test for existance
+
+.play indexing.go /BEGIN demo OMIT/,/END demo OMIT/
+
+* Indexing: Arrays, slices and strings
+
+- Looking up items in arrays, slices and strings uses index expressions as well
+- String indexing is read-only
+- Out of bound access results in runtime errors
+
+Slice expressions are also supported:
+
+.play slicing.go /BEGIN demo OMIT/,/END demo OMIT/
+
+* Panics
+
+For runtime errors, such as: 
+
+- Out of bound access
+- Nil pointer exception
+- Nil map/channel/slice access
+- Nil function calls
+- Division by zero
+
+Aborts execution of the current goroutine. Can be recovered using `recover()` in a `defer` statement, for exception like semantics inside a function:
+
+  defer func() {
+    if p := recover(); p != nil {
+      log.Printf("run time panic: %v", p)
+    }
+  }()
 
 * Errors
-
-TODO: ignoring errors
 
 Error handling in Go feels very old fashioned at first. But it will grow on you.
 
@@ -416,8 +556,10 @@ Most often used in function declarations as the last parameter:
 Common construct is wrapping a function in an `if` statement and on a failed call
 return the error annotated with some extra details:
 
-  if err := readFromNetwork(); err != nil {
+  if data, err := ReadFromNetwork(); err != nil {
     return errors.Wrap(err, "read from network failed")
+  } else {
+    handle(data)
   }
 
 - The `errors` package here is [[https://godoc.org/github.com/pkg/errors][github.com/pkg/errors]]
@@ -436,15 +578,32 @@ The `net` package defines its own `Error` type:
 We can work with that:
 
   for {
-    if err := readFromNetwork(); err != nil {
+    if data, err := ReadFromNetwork(); err != nil {
       if nerr, ok := err.(net.Error); ok && nerr.Temporary() {
         time.Sleep(5 * time.Second)
         continue
       }
       return err
+    } else {
+      handle(data)
     }
     break
   }
+
+* Errors: Ignoring
+
+- Don't ever do it
+- But if you must, use the underscore notation
+
+  data, _ := ReadFromNetwork()
+  handle(data)
+
+A better solution: Turn errors into panics
+
+  handle(MustReadFromNetwork())
+
+- Create new wrapper function named `Must*`
+- Panics on error
 
 * Working with I/O
 
@@ -511,7 +670,6 @@ Having only a single handler for a whole server is not very useful. So in order 
   func NewServeMux() *ServeMux
   func (mux *ServeMux) Handle(pattern string, handler Handler)
   func (mux *ServeMux) HandleFunc(pattern string, handler func(ResponseWriter, *Request))
-  func (mux *ServeMux) Handler(r *Request) (h Handler, pattern string)
   func (mux *ServeMux) ServeHTTP(w ResponseWriter, r *Request)
 
 A default instance is available with the `Handle` and `HandleFunc` methods exposed at package level.
@@ -526,9 +684,9 @@ A default instance is available with the `Handle` and `HandleFunc` methods expos
 The bundled `ServeMux` is very basic. I prefer working with the [[http://www.gorillatoolkit.org/][Gorilla toolkit]], which also has support for:
 
 - URL Parameters
-- Sessions
 - Method based routing
 - Header based routing
+- Sessions
 
 There is a ton of other multiplexers available:
 
@@ -543,7 +701,7 @@ A complete example:
 
 * JSON encoding / decoding
 
-Despite the dynamic nature of JSON, Go, being a statically typed language, has excellent JSON support.
+Despite the dynamic nature of JSON, Go has excellent JSON support.
 
 - Works with single scalar values. Not very useful!
 - Works with complex structs embedded in multiple levels with type check during encoding and decoding. Very useful!
@@ -571,7 +729,18 @@ Decode using the `json.Marshal` function:
 
 * JSON I/O
 
-TODO: explain `json.NewEncoder`, `json.NewDecoder`
+If you're encoding or decoding to something that supports the `io.Reader` or `io.Writer` interfaces use:
+
+  func WriteData(wr io.Writer, e Employee) error {
+    return json.NewEncoder(wr).Encode(e)
+  }
+
+  func ReadData(rd io.Reader) (Employee, error) {
+    e := Employee{}
+    return e, json.NewDecoder(rd).Decode(&e)
+  }
+
+Works very well with HTTP requests / responses.
 
 * Serving JSON
 
@@ -584,7 +753,15 @@ In this example I'm going to write a web service exposing a database of employee
 
 I will attach a `ServeHTTP` method to allow the map to implement the `http.Handler` interface:
 
-  func (er EmployeeRegister) ServeHTTP(rw http.ResponseWriter, req *http.Request) { ... }
+  func (er EmployeeRegistry) ServeHTTP(rw http.ResponseWriter, req *http.Request) { ... }
+
+* Serving JSON, cont'd
+
+Here I configure the routes, and start the HTTP server
+
+.play json_employee_server.go /BEGIN demo OMIT/,/END demo OMIT/
+
+- I'm using the [[http://www.gorillatoolkit.org/pkg/mux][Gorilla mux]]
 
 * Serving JSON, cont'd
 
@@ -592,17 +769,134 @@ The Handler:
 
 .code json_employee_server.go /BEGIN handler OMIT/,/END handler OMIT/
 
-* Serving JSON, cont'd
+* Compilation
 
-The final wiring:
+- Commands
+- Cross compilation
 
-.play json_employee_server.go /BEGIN demo OMIT/,/END demo OMIT/
+* Compilation commands
+
+Differences between:
+
+- `go` `build`
+- `go` `install`
+- `go` `get`
+
+
+Build a single file:
+
+  go build -o employee-server main.go
+
+Build and install a program:
+
+  go install github.com/chrj/employee-server
+
+Fetch, build and install a program:
+
+  go get github.com/chrj/employee-server
+
+* Cross compilation
+
+- Use the environment variables `GOOS` and `GOARCH`
+- Supported OS'es: `android` `darwin` `dragonfly` `freebsd` `linux` `nacl` `netbsd` `openbsd` `plan9` `solaris` `windows`
+- Supported Architectures: `386` `amd64` `amd64p32` `arm` `arm64` `ppc64` `ppc64le` `mips` `mipsle` `mips64` `mips64le` `s390x`
+- Not every combination supported
+
+Examples:
+
+  GOOS=windows GOARCH=amd64 go install github.com/chrj/employee-server
+  GOOS=darwin GOARCH=amd64 go install github.com/chrj/employee-server
+  GOOS=linux GOARCH=amd64 go install github.com/chrj/employee-server
 
 * go fmt
 
+- No formatting controversy
+- Easier to maintain
+- Run on save in your editor
+
+Turns:
+
+  b = MyType{
+  Prop: "Value",
+  OtherProp: 60,
+  }
+
+Into:
+
+  b = MyType{
+      Prop:      "Value",
+      OtherProp: 60,
+  }
+
+
 * go doc
+
+- Autogenerated documentation from comments
+- Access in terminal or in web browser
+- You should document every exported name in your package
+
+  $ go doc net/http.Server.Serve
+  func (srv *Server) Close() error
+      Close immediately closes all active net.Listeners and any connections in
+      state StateNew, StateActive, or StateIdle. For a graceful shutdown, use
+      Shutdown.
+
+      Close does not attempt to close (and does not even know about) any hijacked
+      connections, such as WebSockets.
+
+      Close returns any error returned from closing the Server's underlying
+      Listener(s).
+
+Webserver:
+
+  $ godoc -http=:8081   
 
 * go vet
 
+- Statically analyze your source code for common mistakes
+- Run in CI pipeline or on save in your editor
+
+Example checks:
+
+- Locks copy
+- Malformed struct tags
+- [[https://golang.org/cmd/vet/][Full list of tests]]
+
+There is a lot of other tools for static analysis. I prefer to run them using:
+
+.link https://github.com/alecthomas/gometalinter gometalinter
+
+Runs a lot of different linters concurrently.
+
 * go test
 
+- Unit test files goes with your normal program files: `*_test.go`.
+- Prefer table driven tests
+
+Let's test this:
+
+.code sum/sum.go /BEGIN sum OMIT/,/END sum OMIT/
+
+* go test; cont'd
+
+With this test case:
+
+.code sum/sum_test.go /BEGIN test OMIT/,/END test OMIT/
+
+  $ go test .
+  ok    github.com/chrj/go-talks/2017/intro/sum  0.001s
+
+It works!
+
+* Resources
+
+- [[https://golang.org/ref/spec][The Go specification]]
+- [[https://golang.org/doc/effective_go.html][Effective Go]]
+- [[https://blog.golang.org/][The Go Blog]]
+- Get an invite to [[https://invite.slack.golangbridge.org/][Gophers on Slack]]
+- The [[https://reddit.com/r/golang][/r/golang]] subreddit
+- [[https://groups.google.com/forum/#!forum/golang-nuts][golang-nuts]] on Google Groups
+
+Also, don't be afraid to dive into the standard library source code and learn:
+
+.link https://github.com/golang/go/tree/master/src

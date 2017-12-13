@@ -17,12 +17,13 @@ type Employee struct {
 	Salary     float64 `json:"salary"`
 }
 
-type EmployeeRegister map[int]Employee
+type EmployeeRegistry map[int]Employee
 
 // END types OMIT
 
 // BEGIN handler OMIT
-func (er EmployeeRegister) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+
+func (er EmployeeRegistry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	i, err := strconv.Atoi(mux.Vars(req)["id"])
 	if err != nil {
@@ -50,7 +51,7 @@ func (er EmployeeRegister) ServeHTTP(rw http.ResponseWriter, req *http.Request) 
 
 func main() {
 
-	er := EmployeeRegister{}
+	er := EmployeeRegistry{}
 
 	er[60] = Employee{Name: "Christian", Department: "Development", Salary: 1000}
 	er[80] = Employee{Name: "John", Department: "Management", Salary: 500}

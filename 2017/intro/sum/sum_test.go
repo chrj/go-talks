@@ -2,9 +2,9 @@ package main
 
 import "testing"
 
-func TestSum(t *testing.T) {
+// BEGIN test OMIT
 
-	// BEGIN test OMIT
+func TestSum(t *testing.T) {
 
 	cases := []struct {
 		Numbers  []int
@@ -21,6 +21,6 @@ func TestSum(t *testing.T) {
 		}
 	}
 
-	// END test OMIT
-
 }
+
+// END test OMIT

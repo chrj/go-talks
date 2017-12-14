@@ -740,13 +740,13 @@ Decode using the `json.Marshal` function:
 
 If you're encoding or decoding to something that supports the `io.Reader` or `io.Writer` interfaces use:
 
-  func WriteData(wr io.Writer, e Employee) error {
+  func (e *Employee) Write(wr io.Writer) error {
     return json.NewEncoder(wr).Encode(e)
   }
 
-  func ReadData(rd io.Reader) (Employee, error) {
+  func Load(rd io.Reader) (*Employee, error) {
     e := Employee{}
-    return e, json.NewDecoder(rd).Decode(&e)
+    return &e, json.NewDecoder(rd).Decode(&e)
   }
 
 Works very well with HTTP requests / responses.

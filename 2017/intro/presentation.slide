@@ -28,6 +28,7 @@ https://www.ubivox.com
 - Fast execution
 - Single, statically linked binary
 - Tooling
+- Opinionated
 
 * Environment
 
@@ -894,8 +895,6 @@ With this test case:
 
   $ go test .
   ok    github.com/chrj/go-talks/2017/intro/sum  0.001s
-
-It works!
 
 * Resources
 

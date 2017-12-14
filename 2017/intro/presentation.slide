@@ -402,7 +402,7 @@ Expanded:
 - By convention packages are reference directly from VCS
 - The Go tools will automagically checkout the latest version of your code and any depencies
 - Hopefully they have stable APIs
-- There support for vendored sources embedded in your code base.
+- There's support for vendored sources embedded in your code base.
 - No standard tool for doing the actual vendoring and updating depdencies. Yet! †
 
 Example: I have a package for implementing SMTP servers living on Github:
@@ -416,7 +416,7 @@ Checks out the master branch in: `$GOPATH/github.com/chrj/smtpd`
 * Goroutines
 
 - Lightweight thread
-- Scheduled across OS threads by Go runtime
+- Scheduled across OS threads by Go runtime (bounded by `GOMAXPROCS`)
 - Concurrency construct
 - Millions of goroutines are no problem (4 KB overhead)
 - Can leak if not terminated

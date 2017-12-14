@@ -12,7 +12,7 @@ https://www.ubivox.com
 - Environment: Installing, Paths
 - The language: Syntax, Types, Packages, Goroutines, Channels, Range loops, Defer
 - Idioms: Names, Errors, Working with I/O
-- Applications: HTTP, JSON, Database
+- Applications: HTTP, JSON
 - Compilation: Commands, Cross compilation
 - Tools: `fmt`, `doc`, `vet`, `test`
 - Resources

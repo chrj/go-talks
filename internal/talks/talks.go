@@ -31,6 +31,10 @@ type Talk struct {
 	// Page is the path of the rendered page, relative to the output
 	// directory, with forward slashes.
 	Page string
+	// Link is the address of the page on the site. Cloudflare serves the
+	// page without the .html suffix, and it sends a redirect for the path
+	// that holds the suffix.
+	Link string
 	// Group is the first element of Source, which is the year.
 	Group    string
 	Title    string
@@ -46,8 +50,12 @@ type Group struct {
 // IndexPage holds the text of the landing page that does not come from the
 // talks.
 type IndexPage struct {
-	Title      string
-	Repository string
+	Title string
+	// Website is the address of the main site, which the landing page links
+	// back to. WebsiteLabel is the text of that link.
+	Website      string
+	WebsiteLabel string
+	Repository   string
 }
 
 // Render reads the present file at fsPath and writes its page to w. The
@@ -84,6 +92,7 @@ func Render(w io.Writer, fsPath, relPath string) (Talk, error) {
 	return Talk{
 		Source:   relPath,
 		Page:     pagePath(relPath),
+		Link:     linkPath(relPath),
 		Group:    groupName(relPath),
 		Title:    doc.Title,
 		Subtitle: doc.Subtitle,
@@ -174,6 +183,13 @@ func playable(c present.Code) bool {
 // pagePath gives the address of the rendered page for a source path.
 func pagePath(relPath string) string {
 	return strings.TrimSuffix(relPath, path.Ext(relPath)) + ".html"
+}
+
+// linkPath gives the address of the page on the site. Cloudflare serves an
+// asset that ends in .html under its name without the suffix, and it redirects
+// the name that holds the suffix.
+func linkPath(relPath string) string {
+	return strings.TrimSuffix(pagePath(relPath), ".html")
 }
 
 // groupName gives the first element of a path, or an empty string when the

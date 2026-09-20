@@ -4,8 +4,8 @@ The talks I have given on Go, at [talks.technobabble.dk](https://talks.technobab
 
 ## 2017
 
-- [Introduction to Go](https://talks.technobabble.dk/2017/intro/presentation.html)
-- [The Go X repository](https://talks.technobabble.dk/2017/x-packages/presentation.html)
+- [Introduction to Go](https://talks.technobabble.dk/2017/intro/presentation)
+- [The Go X repository](https://talks.technobabble.dk/2017/x-packages/presentation)
 
 ## How the site is built
 

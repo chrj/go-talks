@@ -24,9 +24,11 @@ import (
 )
 
 const (
-	siteTitle   = "Go Talks"
-	repository  = "https://github.com/chrj/go-talks"
-	toolsModule = "golang.org/x/tools"
+	siteTitle    = "Go Talks"
+	website      = "https://technobabble.dk"
+	websiteLabel = "technobabble.dk"
+	repository   = "https://github.com/chrj/go-talks"
+	toolsModule  = "golang.org/x/tools"
 )
 
 func main() {
@@ -96,7 +98,12 @@ func renderTalk(fsPath, relPath, out string) (talks.Talk, error) {
 
 func writeIndex(out string, rendered []talks.Talk) error {
 	var buf bytes.Buffer
-	page := talks.IndexPage{Title: siteTitle, Repository: repository}
+	page := talks.IndexPage{
+		Title:        siteTitle,
+		Website:      website,
+		WebsiteLabel: websiteLabel,
+		Repository:   repository,
+	}
 	if err := talks.Index(&buf, page, rendered); err != nil {
 		return err
 	}

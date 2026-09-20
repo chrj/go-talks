@@ -77,6 +77,9 @@ func run(src, out, present string) error {
 	if err := copyStatic(present, out); err != nil {
 		return err
 	}
+	if err := writeFile(filepath.Join(out, talks.RedirectsName), talks.Redirects(rendered)); err != nil {
+		return err
+	}
 
 	log.Printf("wrote %d talks to %s, with the static files from %s", len(rendered), out, present)
 	return nil

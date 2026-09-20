@@ -57,6 +57,10 @@ copies `_headers` into `public/`, and then runs `wrangler deploy`.
 `_headers` gives the HTTP headers that Cloudflare adds to the responses, for
 example HSTS.
 
+The render command writes `_redirects`. Links to a talk exist that end in
+`.slide`, which is the name of the source file. Each of them gets a permanent
+redirect to the page.
+
 For each pull request, the `build.yml` workflow uploads a preview version of
 the Worker. The preview version does not change the deployed site. It is on
 `https://pr-<number>-go-talks.<account>.workers.dev`, and the pull request

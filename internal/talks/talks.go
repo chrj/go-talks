@@ -149,6 +149,20 @@ func StaticFiles() []string {
 	return []string{"favicon.ico", "slides.js"}
 }
 
+// RedirectsName is the file that gives Cloudflare the redirects of the site.
+const RedirectsName = "_redirects"
+
+// Redirects gives the content of the redirects file. Links to a talk exist
+// that end in .slide, which is the name of the source file. Each of them gets
+// a permanent redirect to the page.
+func Redirects(talks []Talk) []byte {
+	var buf bytes.Buffer
+	for _, t := range talks {
+		fmt.Fprintf(&buf, "/%s /%s 301\n", t.Source, t.Link)
+	}
+	return buf.Bytes()
+}
+
 // StylesheetName is the name that the pages ask for. slides.js builds the
 // address from the /static/ prefix and adds the file to the body.
 const StylesheetName = "styles.css"

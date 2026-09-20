@@ -188,6 +188,27 @@ func TestIndex(t *testing.T) {
 	}
 }
 
+func TestRedirects(t *testing.T) {
+	list := []talks.Talk{
+		{Source: "2017/intro/presentation.slide", Link: "2017/intro/presentation"},
+		{Source: "2017/x-packages/presentation.slide", Link: "2017/x-packages/presentation"},
+	}
+
+	got := string(talks.Redirects(list))
+
+	want := "/2017/intro/presentation.slide /2017/intro/presentation 301\n" +
+		"/2017/x-packages/presentation.slide /2017/x-packages/presentation 301\n"
+	if got != want {
+		t.Errorf("Redirects() = %q, want %q", got, want)
+	}
+}
+
+func TestRedirectsNoTalks(t *testing.T) {
+	if got := talks.Redirects(nil); len(got) != 0 {
+		t.Errorf("Redirects(nil) = %q, want an empty file", got)
+	}
+}
+
 func TestStylesheet(t *testing.T) {
 	static := fstest.MapFS{"styles.css": {Data: []byte("body { background: white; }")}}
 

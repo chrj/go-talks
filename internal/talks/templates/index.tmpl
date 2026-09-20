@@ -94,7 +94,7 @@ It is inline, so that the page needs no second request for it.
     <ul>
       {{range .Talks}}
       <li>
-        <a href="/{{.Page}}">{{.Title}}</a>
+        <a href="/{{.Link}}">{{.Title}}</a>
         {{with .Subtitle}}<span class="subtitle">{{.}}</span>{{end}}
       </li>
       {{end}}

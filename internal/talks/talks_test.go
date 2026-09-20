@@ -20,6 +20,7 @@ func TestRender(t *testing.T) {
 	want := talks.Talk{
 		Source:   "2017/example/talk.slide",
 		Page:     "2017/example/talk.html",
+		Link:     "2017/example/talk",
 		Group:    "2017",
 		Title:    "Example talk",
 		Subtitle: "A subtitle for the test",
@@ -159,8 +160,8 @@ func TestIndex(t *testing.T) {
 		Repository:   "https://github.com/chrj/go-talks",
 	}
 	list := []talks.Talk{
-		{Page: "2017/intro/presentation.html", Group: "2017", Title: "Introduction to Go", Subtitle: "The not so short version"},
-		{Page: "2019/x/presentation.html", Group: "2019", Title: "The Go X repository"},
+		{Page: "2017/intro/presentation.html", Link: "2017/intro/presentation", Group: "2017", Title: "Introduction to Go", Subtitle: "The not so short version"},
+		{Page: "2019/x/presentation.html", Link: "2019/x/presentation", Group: "2019", Title: "The Go X repository"},
 	}
 
 	if err := talks.Index(&buf, page, list); err != nil {
@@ -170,9 +171,9 @@ func TestIndex(t *testing.T) {
 	out := buf.String()
 	for _, want := range []string{
 		"<title>Go Talks</title>",
-		`<a href="/2017/intro/presentation.html">Introduction to Go</a>`,
+		`<a href="/2017/intro/presentation">Introduction to Go</a>`,
 		`<span class="subtitle">The not so short version</span>`,
-		`<a href="/2019/x/presentation.html">The Go X repository</a>`,
+		`<a href="/2019/x/presentation">The Go X repository</a>`,
 		`<a href="https://github.com/chrj/go-talks">Source on GitHub</a>`,
 		`<a class="back" href="https://technobabble.dk">&larr; technobabble.dk</a>`,
 		`aria-label="The Go gopher"`,

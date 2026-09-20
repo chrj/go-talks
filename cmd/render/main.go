@@ -198,11 +198,13 @@ func findPresentDir() (string, error) {
 	return filepath.Join(dir, "cmd", "present"), nil
 }
 
+// writeFile writes one file of the site. The permissions are the usual ones
+// for a public web root: each file is a page or an asset that the world reads.
 func writeFile(path string, b []byte) error {
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil { // #nosec G301
 		return fmt.Errorf("make the directory for %s: %w", path, err)
 	}
-	if err := os.WriteFile(path, b, 0o644); err != nil {
+	if err := os.WriteFile(path, b, 0o644); err != nil { // #nosec G306
 		return fmt.Errorf("write %s: %w", path, err)
 	}
 	return nil

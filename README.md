@@ -75,6 +75,26 @@ To see the site, run the Worker with the local Cloudflare runtime:
 
     golangci-lint run ./...
 
+## Security scanning
+
+Dependabot opens a pull request each week for the GitHub Actions and the Go
+modules. The `security-daily.yml` workflow runs govulncheck, Semgrep, and gosec
+each night, and it also runs on demand.
+
+Both Semgrep and gosec leave out `2017/`. The files there are the code of the
+talks. They teach a point, and some of them show a password or a server without
+a timeout. A scan of them reports the talk, not the site. The `ignore`
+directive in `go.mod` is not enough, because these two tools read the files
+themselves and not the build list.
+
+To run the same scans on your machine:
+
+    go install golang.org/x/vuln/cmd/govulncheck@v1.7.0
+    govulncheck ./...
+
+    go install github.com/securego/gosec/v2/cmd/gosec@v2.28.0
+    gosec -exclude-generated -exclude-dir=2017 ./...
+
 ## Add a talk
 
 1. Make a directory for the talk, under the year: `2026/my-talk/`.

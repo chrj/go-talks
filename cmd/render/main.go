@@ -110,8 +110,9 @@ func writeIndex(out string, rendered []talks.Talk) error {
 	return writeFile(filepath.Join(out, "index.html"), buf.Bytes())
 }
 
-// copyStatic writes the stylesheet, the slide script, and the playground
-// script that the pages load from /static/.
+// copyStatic writes the files that the pages load from /static/: the icon and
+// the slide script as they are, and the stylesheet and the playground script
+// with the parts that this repository adds.
 func copyStatic(present, out string) error {
 	dir := filepath.Join(present, "static")
 	static := os.DirFS(dir)
@@ -124,6 +125,14 @@ func copyStatic(present, out string) error {
 		if err := writeFile(filepath.Join(out, "static", name), b); err != nil {
 			return err
 		}
+	}
+
+	style, err := talks.Stylesheet(static)
+	if err != nil {
+		return fmt.Errorf("build the stylesheet from %s: %w", dir, err)
+	}
+	if err := writeFile(filepath.Join(out, "static", talks.StylesheetName), style); err != nil {
+		return err
 	}
 
 	play, err := talks.PlayScript(static)

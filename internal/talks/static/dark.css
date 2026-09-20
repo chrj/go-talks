@@ -1,0 +1,68 @@
+/*
+The render command appends this file to the stylesheet of the present command.
+
+The slide script adds that stylesheet to the body when the DOM is ready, so a
+stylesheet in the head of the page cannot win against it. One file keeps the
+order clear: the rules below come last, and each selector is the same as the
+selector that it changes.
+
+The rules are for the screen only. The slide script has a print handler, and a
+printed slide stays light.
+*/
+
+html {
+  color-scheme: light dark;
+}
+
+@media screen and (prefers-color-scheme: dark) {
+  body {
+    background: #0f1115;
+  }
+
+  .slides > article {
+    background-color: #1a1d23;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #e6e6e6;
+  }
+
+  h1,
+  h2,
+  h3 {
+    color: #f0f0f0;
+  }
+
+  a {
+    color: #6cc4e0;
+  }
+
+  a:visited {
+    color: rgba(108, 196, 224, 0.75);
+  }
+
+  a:hover {
+    color: #ffffff;
+  }
+
+  pre {
+    background: #12151a;
+    border: 1px solid #2a2f37;
+    color: #e6e6e6;
+  }
+
+  code {
+    color: #e6e6e6;
+  }
+
+  td,
+  th {
+    border: 1px solid #2a2f37;
+  }
+
+  .pagenumber {
+    color: #7a8089;
+  }
+
+  figcaption {
+    color: #9a9a9a;
+  }
+}

@@ -23,6 +23,12 @@ import (
 //go:embed templates/*.tmpl
 var templates embed.FS
 
+// darkCSS holds the rules that give the slides a dark theme. The render
+// command appends them to the stylesheet of the present command.
+//
+//go:embed static/dark.css
+var darkCSS []byte
+
 // Talk describes one presentation.
 type Talk struct {
 	// Source is the path of the .slide file, relative to the source
@@ -135,10 +141,29 @@ func Groups(talks []Talk) []Group {
 }
 
 // StaticFiles gives the files that the render command copies from the static
-// directory of the present command. The pages load styles.css through
-// slides.js, which builds the address from the /static/ prefix.
+// directory of the present command, without a change. The stylesheet is not
+// one of them, because Stylesheet writes it.
 func StaticFiles() []string {
-	return []string{"favicon.ico", "slides.js", "styles.css"}
+	return []string{"favicon.ico", "slides.js"}
+}
+
+// StylesheetName is the name that the pages ask for. slides.js builds the
+// address from the /static/ prefix and adds the file to the body.
+const StylesheetName = "styles.css"
+
+// Stylesheet joins the stylesheet of the present command and the dark theme.
+// The theme comes last, so its rules win over the rules that they change.
+func Stylesheet(static fs.FS) ([]byte, error) {
+	b, err := fs.ReadFile(static, StylesheetName)
+	if err != nil {
+		return nil, fmt.Errorf("read the stylesheet %s: %w", StylesheetName, err)
+	}
+
+	var buf bytes.Buffer
+	buf.Write(b)
+	buf.WriteString("\n")
+	buf.Write(darkCSS)
+	return buf.Bytes(), nil
 }
 
 // playScripts are the playground scripts of the present command, in the order

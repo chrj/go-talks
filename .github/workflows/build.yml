@@ -1,0 +1,113 @@
+name: Build
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build the site
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+
+      # The race detector needs cgo, which setup-go leaves on.
+      - name: Run tests
+        run: go test -race ./...
+
+      - name: Render the talks
+        run: go run ./cmd/render
+
+      - name: Collect the site files
+        run: cp _headers public/
+
+      - name: Check the Worker configuration
+        uses: cloudflare/wrangler-action@v4
+        with:
+          command: deploy --dry-run
+
+      - name: Upload the built site
+        uses: actions/upload-artifact@v7
+        with:
+          name: site
+          path: public/
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+
+      - uses: golangci/golangci-lint-action@v9
+
+  preview:
+    name: Upload a preview
+    needs: build
+    # Pull requests from forks and from Dependabot get no repository secrets.
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    concurrency:
+      group: preview-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    environment:
+      name: preview
+      url: ${{ steps.upload.outputs.url }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Download the built site
+        uses: actions/download-artifact@v8
+        with:
+          name: site
+          path: public/
+
+      # The upload does not change the deployed site. Cloudflare serves the new
+      # version only on the preview URL.
+      - name: Upload a preview version
+        id: upload
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          WRANGLER_OUTPUT_FILE_PATH: ${{ runner.temp }}/wrangler-output.ndjson
+          ALIAS: pr-${{ github.event.pull_request.number }}
+        run: |
+          set +e
+          out=$(npx --yes wrangler@4 versions upload --preview-alias "$ALIAS" 2>&1)
+          status=$?
+          set -e
+          echo "$out"
+
+          # A version needs a Worker. The first deploy on master makes it, so
+          # the pull request that adds the Worker gets no preview.
+          if [ "$status" -ne 0 ]; then
+            if echo "$out" | grep -q "does not yet exist"; then
+              echo "::notice::The Worker does not exist yet. The first deploy on master makes it, and then each pull request gets a preview."
+              exit 0
+            fi
+            exit "$status"
+          fi
+
+          url=$(jq -r 'select(.type == "version-upload") | .preview_alias_url // empty' "$WRANGLER_OUTPUT_FILE_PATH")
+          if [ -z "$url" ]; then
+            echo "::error::Cloudflare uploaded the version, but gave no preview URL. Make sure that wrangler.jsonc on master has \"preview_urls\": true, and that master has deployed after that change."
+            exit 1
+          fi
+          echo "Preview: $url" >> "$GITHUB_STEP_SUMMARY"
+          echo "url=$url" >> "$GITHUB_OUTPUT"

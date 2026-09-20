@@ -1,0 +1,16 @@
+Example talk
+A subtitle for the test
+
+Christian Joergensen
+christian@technobabble.dk
+
+* A section
+
+- first bullet
+- second bullet
+
+.play hello.go
+
+* A section with a shell snippet
+
+.play build.sh

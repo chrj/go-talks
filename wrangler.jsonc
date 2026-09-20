@@ -1,0 +1,22 @@
+// Cloudflare Workers configuration. The Worker serves the static files in
+// `public/`, which the render command writes. The script in `src/index.js`
+// answers the requests of the playground only.
+{
+  "name": "go-talks",
+  "main": "src/index.js",
+  "compatibility_date": "2026-09-20",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS"
+  },
+  // Serve the site on the custom domain below, not on workers.dev. The preview
+  // versions for pull requests are on workers.dev. Only `wrangler deploy`
+  // changes `preview_urls`, not `wrangler versions upload`.
+  "workers_dev": false,
+  "preview_urls": true,
+  // Cloudflare makes the DNS record for the custom domain. If a different DNS
+  // record already exists for the hostname, the deploy fails.
+  "routes": [
+    { "pattern": "talks.technobabble.dk", "custom_domain": true }
+  ]
+}

@@ -188,6 +188,39 @@ func TestIndex(t *testing.T) {
 	}
 }
 
+func TestStylesheet(t *testing.T) {
+	static := fstest.MapFS{"styles.css": {Data: []byte("body { background: white; }")}}
+
+	got, err := talks.Stylesheet(static)
+	if err != nil {
+		t.Fatalf("Stylesheet() error = %v, want no error", err)
+	}
+
+	out := string(got)
+	if !strings.HasPrefix(out, "body { background: white; }") {
+		t.Errorf("Stylesheet() = %q, want it to start with the stylesheet of the present command", out)
+	}
+	if !strings.Contains(out, "prefers-color-scheme: dark") {
+		t.Error("Stylesheet() holds no dark theme")
+	}
+
+	// The theme wins only when its rules come after the rules that they
+	// change.
+	if strings.Index(out, "prefers-color-scheme") < strings.Index(out, "background: white") {
+		t.Error("Stylesheet() puts the dark theme before the stylesheet of the present command")
+	}
+}
+
+func TestStylesheetMissing(t *testing.T) {
+	_, err := talks.Stylesheet(fstest.MapFS{})
+	if err == nil {
+		t.Fatal("Stylesheet() error = nil, want an error that names the stylesheet")
+	}
+	if !strings.Contains(err.Error(), "styles.css") {
+		t.Errorf("Stylesheet() error = %q, want it to name styles.css", err)
+	}
+}
+
 func TestPlayScript(t *testing.T) {
 	static := fstest.MapFS{
 		"jquery.js":     {Data: []byte("jquery")},

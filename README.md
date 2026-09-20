@@ -20,6 +20,21 @@ they always match the module version in `go.mod`. Nothing from the present
 command is a copy in this repository, except the two templates in
 `internal/talks/templates/`.
 
+## Dark mode
+
+The slides follow the theme of the reader's system. `internal/talks/static/dark.css`
+holds the rules, and the render command appends them to the stylesheet of the
+present command.
+
+The rules go in that one file for a reason. The slide script adds the
+stylesheet to the body when the DOM is ready, so a stylesheet in the head of
+the page cannot win against it. One file keeps the order clear: the rules of
+the theme come last, and each selector is the same as the selector that it
+changes.
+
+The theme is for the screen only. The slide script has a print handler, and a
+printed slide stays light.
+
 `public/` is generated, so Git ignores it. GitHub Actions builds the site again
 on each push to `master`.
 

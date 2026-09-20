@@ -1,6 +1,9 @@
 {{/*
 This is the landing page. It lists the talks, grouped by the first element of
 their path, which is the year.
+
+The gopher is a simple drawing of the Go mascot, which Renee French designed.
+It is inline, so that the page needs no second request for it.
 */}}
 
 {{define "index"}}
@@ -24,26 +27,68 @@ their path, which is the year.
       }
       body {
         margin: 0 auto;
-        padding: 3rem 1.5rem;
+        padding: 2rem 1.5rem 3rem;
         max-width: 42rem;
         background: var(--bg);
         color: var(--fg);
         font: 1rem/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
       }
-      h1 { font-size: 1.8rem; margin: 0 0 .5rem; }
+      h1 { font-size: 1.8rem; margin: 0 0 .35rem; }
       h2 { font-size: 1rem; margin: 2.5rem 0 .75rem; color: var(--dim); font-weight: 600; }
-      p.intro { color: var(--dim); margin: 0 0 1rem; }
+      p.intro { color: var(--dim); margin: 0; }
       ul { list-style: none; margin: 0; padding: 0; }
       li { margin: 0 0 1rem; }
       a { color: var(--accent); text-decoration: none; }
       a:hover, a:focus { text-decoration: underline; }
       .subtitle { display: block; color: var(--dim); font-size: .9rem; }
+      .back { display: inline-block; margin: 0 0 2rem; font-size: .9rem; }
+      .masthead { display: flex; align-items: center; gap: 1.25rem; }
+      .gopher { width: 88px; height: auto; flex: none; }
       footer { margin-top: 3rem; color: var(--dim); font-size: .85rem; }
+      footer a + a { margin-left: .35rem; }
+      footer a + a::before { content: "· "; color: var(--dim); }
     </style>
   </head>
   <body>
-    <h1>{{.Title}}</h1>
-    <p class="intro">Talks I have given on Go.</p>
+    <a class="back" href="{{.Website}}">&larr; {{.WebsiteLabel}}</a>
+
+    <div class="masthead">
+      <svg class="gopher" viewBox="0 0 220 250" role="img" aria-label="The Go gopher">
+        <g fill="#9fd8e3" stroke="#3a3a3a" stroke-width="4">
+          <ellipse cx="62" cy="40" rx="20" ry="26"/>
+          <ellipse cx="158" cy="40" rx="20" ry="26"/>
+          <ellipse cx="34" cy="162" rx="12" ry="22"/>
+          <ellipse cx="186" cy="162" rx="12" ry="22"/>
+          <ellipse cx="110" cy="126" rx="78" ry="104"/>
+        </g>
+        <g fill="#f7d9a8" stroke="#3a3a3a" stroke-width="4">
+          <ellipse cx="84" cy="232" rx="20" ry="11"/>
+          <ellipse cx="136" cy="232" rx="20" ry="11"/>
+        </g>
+        <g fill="#fff" stroke="#3a3a3a" stroke-width="4">
+          <circle cx="78" cy="96" r="30"/>
+          <circle cx="142" cy="96" r="30"/>
+        </g>
+        <g fill="#1c1c1c">
+          <circle cx="88" cy="99" r="12"/>
+          <circle cx="132" cy="99" r="12"/>
+        </g>
+        <g fill="#fff">
+          <circle cx="92" cy="95" r="4"/>
+          <circle cx="136" cy="95" r="4"/>
+        </g>
+        <ellipse cx="110" cy="142" rx="26" ry="20" fill="#f7d9a8" stroke="#3a3a3a" stroke-width="4"/>
+        <ellipse cx="110" cy="132" rx="7" ry="5" fill="#3a3a3a"/>
+        <rect x="102" y="142" width="16" height="15" rx="2" fill="#fff" stroke="#3a3a3a" stroke-width="3"/>
+        <line x1="110" y1="142" x2="110" y2="157" stroke="#3a3a3a" stroke-width="3"/>
+      </svg>
+
+      <div>
+        <h1>{{.Title}}</h1>
+        <p class="intro">Talks I have given on Go.</p>
+      </div>
+    </div>
+
     {{range .Groups}}
     <h2>{{.Name}}</h2>
     <ul>
@@ -55,7 +100,9 @@ their path, which is the year.
       {{end}}
     </ul>
     {{end}}
+
     <footer>
+      <a href="{{.Website}}">{{.WebsiteLabel}}</a>
       <a href="{{.Repository}}">Source on GitHub</a>
     </footer>
   </body>

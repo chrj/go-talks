@@ -46,8 +46,12 @@ type Group struct {
 // IndexPage holds the text of the landing page that does not come from the
 // talks.
 type IndexPage struct {
-	Title      string
-	Repository string
+	Title string
+	// Website is the address of the main site, which the landing page links
+	// back to. WebsiteLabel is the text of that link.
+	Website      string
+	WebsiteLabel string
+	Repository   string
 }
 
 // Render reads the present file at fsPath and writes its page to w. The

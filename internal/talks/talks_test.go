@@ -152,7 +152,12 @@ func TestGroups(t *testing.T) {
 func TestIndex(t *testing.T) {
 	var buf bytes.Buffer
 
-	page := talks.IndexPage{Title: "Go Talks", Repository: "https://github.com/chrj/go-talks"}
+	page := talks.IndexPage{
+		Title:        "Go Talks",
+		Website:      "https://technobabble.dk",
+		WebsiteLabel: "technobabble.dk",
+		Repository:   "https://github.com/chrj/go-talks",
+	}
 	list := []talks.Talk{
 		{Page: "2017/intro/presentation.html", Group: "2017", Title: "Introduction to Go", Subtitle: "The not so short version"},
 		{Page: "2019/x/presentation.html", Group: "2019", Title: "The Go X repository"},
@@ -169,6 +174,8 @@ func TestIndex(t *testing.T) {
 		`<span class="subtitle">The not so short version</span>`,
 		`<a href="/2019/x/presentation.html">The Go X repository</a>`,
 		`<a href="https://github.com/chrj/go-talks">Source on GitHub</a>`,
+		`<a class="back" href="https://technobabble.dk">&larr; technobabble.dk</a>`,
+		`aria-label="The Go gopher"`,
 	} {
 		if !strings.Contains(out, want) {
 			t.Errorf("Index() page does not hold %q", want)

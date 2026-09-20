@@ -48,6 +48,9 @@ the Worker. The preview version does not change the deployed site. It is on
 links to it with "View deployment". Pull requests from forks and from
 Dependabot get no preview, because they get no repository secrets.
 
+A version needs a Worker, and the first deploy on `master` makes it. Until that
+deploy, the preview step writes a notice and stops.
+
 The workflows need two repository secrets:
 
 - `CLOUDFLARE_API_TOKEN` — an API token with the "Edit Cloudflare Workers"

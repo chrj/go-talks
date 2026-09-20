@@ -70,7 +70,9 @@ func Render(w io.Writer, fsPath, relPath string) (Talk, error) {
 	// directive. Without it, the snippets get no Run button.
 	present.PlayEnabled = true
 
-	b, err := os.ReadFile(fsPath)
+	// The caller gives the path, which comes from a walk of the source
+	// directory. This command builds a site from local files only.
+	b, err := os.ReadFile(fsPath) // #nosec G304
 	if err != nil {
 		return Talk{}, fmt.Errorf("read present file: %w", err)
 	}

@@ -1,0 +1,5 @@
+# The render command writes the site. CI builds it again on each deploy.
+public/
+
+# The local state of wrangler.
+.wrangler/

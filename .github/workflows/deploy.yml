@@ -3,7 +3,7 @@ name: Deploy
 on:
   push:
     branches:
-      - master
+      - main
   workflow_dispatch:
 
 # Let one run finish before the next starts. Then an older run cannot finish

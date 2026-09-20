@@ -94,11 +94,11 @@ jobs:
           set -e
           echo "$out"
 
-          # A version needs a Worker. The first deploy on master makes it, so
+          # A version needs a Worker. The first deploy on main makes it, so
           # the pull request that adds the Worker gets no preview.
           if [ "$status" -ne 0 ]; then
             if echo "$out" | grep -q "does not yet exist"; then
-              echo "::notice::The Worker does not exist yet. The first deploy on master makes it, and then each pull request gets a preview."
+              echo "::notice::The Worker does not exist yet. The first deploy on main makes it, and then each pull request gets a preview."
               exit 0
             fi
             exit "$status"
@@ -106,7 +106,7 @@ jobs:
 
           url=$(jq -r 'select(.type == "version-upload") | .preview_alias_url // empty' "$WRANGLER_OUTPUT_FILE_PATH")
           if [ -z "$url" ]; then
-            echo "::error::Cloudflare uploaded the version, but gave no preview URL. Make sure that wrangler.jsonc on master has \"preview_urls\": true, and that master has deployed after that change."
+            echo "::error::Cloudflare uploaded the version, but gave no preview URL. Make sure that wrangler.jsonc on main has \"preview_urls\": true, and that main has deployed after that change."
             exit 1
           fi
           echo "Preview: $url" >> "$GITHUB_STEP_SUMMARY"

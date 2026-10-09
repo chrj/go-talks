@@ -1,6 +1,6 @@
 module github.com/chrj/go-talks
 
-go 1.27.1
+go 1.27.2
 
 // The files of the talks are snippets, not packages. Several hold their own
 // func main in one directory, and some import modules that no longer exist.

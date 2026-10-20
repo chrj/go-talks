@@ -9,6 +9,6 @@ toolchain go1.27.2
 // The go command must not try to build them.
 ignore ./2017
 
-require golang.org/x/tools v0.51.0
+require golang.org/x/tools v0.52.0
 
 require github.com/yuin/goldmark v1.7.17 // indirect
